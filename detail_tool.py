@@ -28,6 +28,7 @@ def update(detail,day,dec,close,price,buy,gain,money,stock):
 
 import math
 import pandas as pd
+import numpy as np
 
 # 記錄買賣資訊 
 def buy_or_sell(day, decide, close, type_=1):
@@ -75,4 +76,30 @@ def buy_or_sell(day, decide, close, type_=1):
         gain += sell                                                                   # 淨收益計算
         num = stock                                                                    #將持有的股數全數出清
         detail_pd,stock = update(detail,day,'-' + str(num),close,round(close * 0.995575),'+' + str(buy),gain,money,stock)
+
+
+def double_BBands(data, period=20, std_num=2): 
+    
+    # 計算布林通道 上軌、中線與下軌:
+    res = data.copy(deep=True)                                               # 複製 data資料
+    res['b_mid'] = data['Close'].rolling(period).mean()                      # 計算中線(20日均線)
+    std = data['Close'].rolling(period).std(ddof=0)                          # 計算用於上下軌的標準差
+    res['b_up'] = res['b_mid'] + std * std_num                               # 計算上軌
+    res['b_up_long'] = res['b_mid'] + std * 3
+    res['b_low'] = res['b_mid'] - std * std_num                              # 計算下軌
+    res['b_low_long'] = res['b_mid'] - std * 3
+    
+    # 計算布林通道 上軌斜率、中線斜率、通道寬度:
+    b_slope = [np.nan]
+    ma_slope = [np.nan]
+    b_width = [np.nan]
+    t = res.index
+    for i in range(1, len(res)):  
+        b_slope.append((res.loc[t[i], 'b_up']-res.loc[t[i-1], 'b_up'])/res.loc[t[i-1], 'b_up'] * 100)      # 計算布林通道上軌斜率
+        ma_slope.append((res.loc[t[i], 'b_mid']/res.loc[t[i-1], 'b_mid']-1) * 100)   # 計算中線斜率
+        b_width.append((res.loc[t[i], 'b_up']/res.loc[t[i], 'b_low']-1) * 100)       # 計算布林通道寬度
+    res['bband_slope'] = b_slope
+    res['bband_width'] = b_width
+    res['mid_slope'] = ma_slope
+    return res
 
