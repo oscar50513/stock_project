@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
+import math
+import pandas as pd
+import numpy as np
 
 def update(detail,day,dec,close,price,buy,gain,money,stock):
     temp_detail = []
@@ -21,14 +21,6 @@ def update(detail,day,dec,close,price,buy,gain,money,stock):
     detail.append(temp_detail)                                                     #紀錄交易資訊至正是表格中
     detail_pd = pd.DataFrame(detail[1:],columns=detail[0])                         #將交易記錄製作成 DataFrame 
     return detail_pd,stock
-
-
-# In[2]:
-
-
-import math
-import pandas as pd
-import numpy as np
 
 # 記錄買賣資訊 
 def buy_or_sell(day, decide, close, type_=1):
@@ -103,3 +95,5 @@ def double_BBands(data, period=20, std_num=2):
     res['mid_slope'] = ma_slope
     return res
 
+def stock_picture():
+    pass
