@@ -59,7 +59,7 @@ def buy_or_sell(day, decide, close, type_=1):
         sell = round(close * 0.995575 * num)                                           # 計算實際收入
         money = money + sell                                                           # 更新 money
         gain += sell                                                                   # 淨收益計算
-        detail_pd,stock = update(detail,day,'-' + str(num),close,price,'+' + str(buy),gain,money,stock)
+        detail_pd,stock = update(detail,day,'-' + str(num),close,price,'+' + str(sell),gain,money,stock)
         buy_unit = round(money/5)                                                      #更新每次進場金額
         
     elif decide == 'over':
@@ -67,7 +67,7 @@ def buy_or_sell(day, decide, close, type_=1):
         money = money + sell                                                           # 更新 money
         gain += sell                                                                   # 淨收益計算
         num = stock                                                                    #將持有的股數全數出清
-        detail_pd,stock = update(detail,day,'-' + str(num),close,round(close * 0.995575),'+' + str(buy),gain,money,stock)
+        detail_pd,stock = update(detail,day,'-' + str(num),close,round(close * 0.995575),'+' + str(sell),gain,money,stock)
 
 
 def double_BBands(data, period=20, std_num=2): 
