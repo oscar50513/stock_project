@@ -47,21 +47,26 @@ def fill_gaps(csv_path):
     if isinstance(df_new.columns, pd.MultiIndex):
         df_new.columns = df_new.columns.get_level_values(0)
         
-    df_new = df_new[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+    df_new = df_new[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']].dropna(subset=['Close'])
+    df_new['Date'] = pd.to_datetime(df_new['Date']).dt.tz_localize(None)
+    df_new = df_new[df_new['Date'] > last_date.tz_localize(None) if last_date.tzinfo else df_new['Date'] > last_date]
+    if df_new.empty:
+        print(f"{stock_id} has no newer trading days after {last_date.strftime('%Y/%m/%d')}.")
+        return
+
     df_new['Date'] = df_new['Date'].dt.strftime('%Y/%m/%d')
     
     # Round float values
     for col in ['Open', 'High', 'Low', 'Close']:
         df_new[col] = df_new[col].round(2)
         
-    # Volume might be in shares, but old data is in lots (1000 shares). 
-    # Let's check old volume. E.g. TSMC on 2022/08/19 is 13950 (which is 13 million shares).
     # yfinance gives shares. So we divide by 1000.
-    df_new['Volume'] = (df_new['Volume'] / 1000).astype(int)
+    df_new['Volume'] = (df_new['Volume'].fillna(0) / 1000).astype(int)
     
-    # Append
+    # Append and deduplicate
     print(f"Appending {len(df_new)} rows to {csv_path}")
     df_new.to_csv(csv_path, mode='a', header=False, index=False)
+
 
 if __name__ == '__main__':
     csvs = glob.glob('*.csv')

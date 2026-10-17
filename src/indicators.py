@@ -370,6 +370,7 @@ def load_stock(stock_id: str) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df["Volume"] = pd.to_numeric(df["Volume"], errors="coerce")
     df.sort_index(inplace=True)
+    df = df[~df.index.duplicated(keep="last")]
     return df
 
 
