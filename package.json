@@ -1,0 +1,36 @@
+{
+  "name": "stockradar-desktop",
+  "version": "1.0.0",
+  "description": "台股與主動式 ETF 量化分析工作站（桌面版）",
+  "author": {
+    "name": "zyxu"
+  },
+  "main": "electron/main.cjs",
+  "private": true,
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.zyxu.stockradar",
+    "productName": "StockRadar",
+    "asar": false,
+    "mac": {
+      "category": "public.app-category.finance",
+      "icon": "electron/icon.png",
+      "target": [
+        "dir",
+        "dmg"
+      ]
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ]
+  }
+}

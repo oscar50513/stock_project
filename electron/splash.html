@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>台股與主動式 ETF 量化分析工作站</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      height: 100vh;
+      width: 100vw;
+      background: radial-gradient(circle at 50% 25%, #162238 0%, #0b101b 65%, #070a12 100%);
+      color: #f0f4f8;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      -webkit-app-region: drag;
+    }
+    .card {
+      background: rgba(22, 32, 50, 0.72);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 20px;
+      padding: 42px 52px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(16px);
+      max-width: 480px;
+      width: 90%;
+    }
+    .logo-wrap {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 20px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #10b981 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 25px rgba(14, 165, 233, 0.35);
+    }
+    .logo-wrap svg {
+      width: 44px;
+      height: 44px;
+      stroke: #ffffff;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      color: #f8fafc;
+    }
+    .subtitle {
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    .spinner-bar {
+      width: 100%;
+      height: 5px;
+      background: rgba(148, 163, 184, 0.16);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .spinner-fill {
+      position: absolute;
+      top: 0;
+      left: -40%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, #38bdf8, #10b981, transparent);
+      animation: slide 1.4s infinite ease-in-out;
+    }
+    @keyframes slide {
+      0% { left: -40%; }
+      100% { left: 100%; }
+    }
+    .status {
+      font-size: 12.5px;
+      color: #38bdf8;
+      font-family: "SF Mono", Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+        <polyline points="16 7 22 7 22 13"></polyline>
+      </svg>
+    </div>
+    <h1>StockRadar 台股量化工作站</h1>
+    <p class="subtitle">個人台股技術分析 · 主動式 ETF 追蹤 · 策略回測 · 訊號雷達</p>
+    <div class="spinner-bar">
+      <div class="spinner-fill"></div>
+    </div>
+    <div class="status" id="status-text">正在啟動本機 Python 量化分析引擎...</div>
+  </div>
+</body>
+</html>

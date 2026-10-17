@@ -39,3 +39,9 @@ paper_portfolio.json
 
 # 日誌
 *.log
+
+# Node / Electron 桌面版打包產物
+node_modules/
+*.app/
+*.dmg
+
