@@ -314,7 +314,7 @@ with st.container(border=True):
         if holdings_rows:
             h_df = pd.DataFrame(holdings_rows).set_index("股票")
             st.dataframe(
-                h_df.style.applymap(
+                h_df.style.map(
                     lambda v: "color: #ef4444" if isinstance(v, (int, float)) and v > 0
                               else ("color: #22c55e" if isinstance(v, (int, float)) and v < 0 else ""),
                     subset=["未實現損益", "損益%"]

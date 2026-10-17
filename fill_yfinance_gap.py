@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 
 def fill_gaps(csv_path):
     stock_id = os.path.basename(csv_path).replace('.csv', '')
-    if not stock_id.isdigit():
-        print(f"Skipping {csv_path}, not a valid digit ID")
+    if not (stock_id and stock_id[0].isdigit()):
+        print(f"Skipping {csv_path}, not a valid stock/ETF ID")
         return
     
     # Read the existing CSV
