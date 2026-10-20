@@ -570,28 +570,32 @@ with tab_single:
                 "策略期末資產",
                 f"NT${m['final_equity']:,.0f}",
                 delta=f"淨損益 NT${m['net_pnl']:+,.0f}",
-                delta_color="inverse",
+                delta_color="red" if m["net_pnl"] > 0 else ("green" if m["net_pnl"] < 0 else "gray"),
+                delta_arrow="up" if m["net_pnl"] > 0 else ("down" if m["net_pnl"] < 0 else "off"),
                 border=True,
             )
             st.metric(
                 "策略總報酬",
                 f"{m['strat_return']:+.2f}%",
                 delta=f"年化 CAGR {m['cagr']:+.2f}%",
-                delta_color="inverse",
+                delta_color="red" if m["strat_return"] > 0 else ("green" if m["strat_return"] < 0 else "gray"),
+                delta_arrow="up" if m["strat_return"] > 0 else ("down" if m["strat_return"] < 0 else "off"),
                 border=True,
             )
             st.metric(
                 "Buy & Hold 報酬",
                 f"{m['bh_return']:+.2f}%",
                 delta=f"年化 CAGR {m['bh_cagr']:+.2f}%",
-                delta_color="inverse",
+                delta_color="red" if m["bh_return"] > 0 else ("green" if m["bh_return"] < 0 else "gray"),
+                delta_arrow="up" if m["bh_return"] > 0 else ("down" if m["bh_return"] < 0 else "off"),
                 border=True,
             )
             st.metric(
                 "超額報酬 (Alpha)",
                 f"{m['excess_return']:+.2f}%",
                 delta="打敗 B&H" if m["excess_return"] >= 0 else "落後 B&H",
-                delta_color="inverse",
+                delta_color="red" if m["excess_return"] > 0 else ("green" if m["excess_return"] < 0 else "gray"),
+                delta_arrow="up" if m["excess_return"] > 0 else ("down" if m["excess_return"] < 0 else "off"),
                 border=True,
             )
 
@@ -602,6 +606,7 @@ with tab_single:
                 f"{m['mdd']:.2f}%",
                 delta=f"B&H 回撤 {m['bh_mdd']:.2f}%",
                 delta_color="off",
+                delta_arrow="off",
                 border=True,
             )
             st.metric(
@@ -609,6 +614,7 @@ with tab_single:
                 f"{m['max_dd_days']} 天",
                 delta=f"年化波動 {m['vol_ann']:.2f}%",
                 delta_color="off",
+                delta_arrow="off",
                 border=True,
             )
             st.metric("Sharpe Ratio", f"{m['sharpe']:.2f}", border=True)
@@ -622,6 +628,7 @@ with tab_single:
                 f"{m['n_trades']} 次 ({m['win_rate']:.1f}%)",
                 delta=f"最高連勝 {m['max_win_streak']} / 連敗 {m['max_loss_streak']}",
                 delta_color="off",
+                delta_arrow="off",
                 border=True,
             )
             pf_str = f"{m['profit_factor']:.2f}" if m["profit_factor"] < 90 else "∞"
@@ -631,13 +638,15 @@ with tab_single:
                 pf_str,
                 delta=f"賺賠比 {pr_str}",
                 delta_color="off",
+                delta_arrow="off",
                 border=True,
             )
             st.metric(
                 "單筆期望值",
                 f"{m['expectancy_pct']:+.2f}%",
                 delta=f"平均 NT${m['expectancy_ntd']:+,.0f}/筆",
-                delta_color="inverse",
+                delta_color="red" if m["expectancy_ntd"] > 0 else ("green" if m["expectancy_ntd"] < 0 else "gray"),
+                delta_arrow="up" if m["expectancy_ntd"] > 0 else ("down" if m["expectancy_ntd"] < 0 else "off"),
                 border=True,
             )
             st.metric(
@@ -645,6 +654,7 @@ with tab_single:
                 f"{m['best_trade_pct']:+.1f}% / {m['worst_trade_pct']:+.1f}%",
                 delta=f"平均持倉 {m['avg_hold_days']:.1f} 天",
                 delta_color="off",
+                delta_arrow="off",
                 border=True,
             )
             st.metric(
@@ -652,6 +662,7 @@ with tab_single:
                 f"NT${m['total_fees']:,.0f}",
                 delta=f"市場曝險 {m['exposure_pct']:.1f}% 時間",
                 delta_color="off",
+                delta_arrow="off",
                 border=True,
             )
 
@@ -1239,7 +1250,7 @@ with tab_opt:
                 z=z_matrix,
                 text=text_matrix,
                 texttemplate="%{text}",
-                colorscale="RdYlGn",
+                colorscale="RdYlGn_r",
                 colorbar=dict(title=opt_metric_label),
             )
         )

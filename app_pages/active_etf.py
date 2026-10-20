@@ -212,8 +212,9 @@ with st.container(horizontal=True):
         st.metric(
             label=f"{sid} {name} (對標 {bid})",
             value=f"NT${close_now:.2f}",
-            delta=f"單日 {day_chg_pct:+.2f}% ｜ 區間 {period_ret:+.2f}%",
-            delta_color="inverse",
+            delta=f"{day_chg_pct:+.2f}% (區間 {period_ret:+.2f}%)",
+            delta_color="red" if day_chg_pct > 0 else ("green" if day_chg_pct < 0 else "gray"),
+            delta_arrow="up" if day_chg_pct > 0 else ("down" if day_chg_pct < 0 else "off"),
             border=True,
             chart_data=spark,
             chart_type="line",

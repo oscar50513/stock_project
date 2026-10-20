@@ -77,7 +77,8 @@ vol20   = df["Volume"].rolling(20).mean().iloc[-1]
 
 with st.container(horizontal=True):
     st.metric("收盤價 (NTD)", f"{latest:.2f}",
-              delta=f"{chg:+.2f} ({chg_pct:+.2f}%)", border=True,
+              delta=f"{chg:+.2f} ({chg_pct:+.2f}%)",
+              delta_color="inverse", border=True,
               chart_data=df["Close"].iloc[-30:].tolist(), chart_type="line")
     st.metric("52 週最高", f"{high52:.2f}", border=True)
     st.metric("52 週最低", f"{low52:.2f}",  border=True)

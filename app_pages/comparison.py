@@ -245,21 +245,24 @@ if len(stock_data) >= 2:
                     "🌟 最大夏普組合 (Max Sharpe)",
                     f"Sharpe {port_sharpes[idx_max_sharpe]:.2f}",
                     delta=f"年化報酬 {port_returns[idx_max_sharpe]:+.1f}% ｜ 波動 {port_vols[idx_max_sharpe]:.1f}%",
-                    delta_color="inverse",
+                    delta_color="red" if port_returns[idx_max_sharpe] > 0 else ("green" if port_returns[idx_max_sharpe] < 0 else "gray"),
+                    delta_arrow="up" if port_returns[idx_max_sharpe] > 0 else ("down" if port_returns[idx_max_sharpe] < 0 else "off"),
                     border=True,
                 )
                 st.metric(
                     "🛡️ 最小波動組合 (Min Volatility)",
                     f"波動率 {port_vols[idx_min_vol]:.2f}%",
                     delta=f"年化報酬 {port_returns[idx_min_vol]:+.1f}% ｜ Sharpe {port_sharpes[idx_min_vol]:.2f}",
-                    delta_color="off",
+                    delta_color="red" if port_returns[idx_min_vol] > 0 else ("green" if port_returns[idx_min_vol] < 0 else "gray"),
+                    delta_arrow="up" if port_returns[idx_min_vol] > 0 else ("down" if port_returns[idx_min_vol] < 0 else "off"),
                     border=True,
                 )
                 st.metric(
                     "⚖️ 等權重組合 (1/N 平均分配)",
                     f"Sharpe {port_sharpes[idx_eq]:.2f}",
                     delta=f"年化報酬 {port_returns[idx_eq]:+.1f}% ｜ 波動 {port_vols[idx_eq]:.1f}%",
-                    delta_color="off",
+                    delta_color="red" if port_returns[idx_eq] > 0 else ("green" if port_returns[idx_eq] < 0 else "gray"),
+                    delta_arrow="up" if port_returns[idx_eq] > 0 else ("down" if port_returns[idx_eq] < 0 else "off"),
                     border=True,
                 )
 

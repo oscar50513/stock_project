@@ -244,11 +244,14 @@ total_pnl_pct = total_pnl / initial_cap * 100
 
 with st.container(horizontal=True):
     st.metric("總資產",  f"NT${total_equity:,.0f}",
-              delta=f"{total_pnl:+,.0f} ({total_pnl_pct:+.2f}%)", border=True)
+              delta=f"{total_pnl:+,.0f} ({total_pnl_pct:+.2f}%)",
+              delta_color="inverse", border=True)
     st.metric("現金",    f"NT${pf['cash']:,.0f}",
-              delta=f"{pf['cash']/total_equity*100:.1f}% 佔比", border=True)
+              delta=f"{pf['cash']/total_equity*100:.1f}% 佔比",
+              delta_color="off", delta_arrow="off", border=True)
     st.metric("持股市值", f"NT${stock_value:,.0f}",
-              delta=f"{stock_value/total_equity*100:.1f}% 佔比", border=True)
+              delta=f"{stock_value/total_equity*100:.1f}% 佔比",
+              delta_color="off", delta_arrow="off", border=True)
     st.metric("初始資金", f"NT${initial_cap:,.0f}", border=True)
 
 # ── 資產走勢圖 ────────────────────────────────────────────────────────────────

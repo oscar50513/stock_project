@@ -252,10 +252,10 @@ n_neutral = int((scan_df_all["多空評分"] == 0).sum())
 n_triggers = len(fresh_alerts)
 
 with st.container(horizontal=True):
-    st.metric("掃描標的總數", f"{len(scan_df_all)} 檔", delta=f"最新資料日 {scan_df_all['最新日期'].max()}", delta_color="off", border=True)
-    st.metric("🔴 偏多 / 買方格局", f"{n_bull} 檔", delta=f"佔比 {n_bull/len(scan_df_all)*100:.0f}%", delta_color="inverse", border=True)
-    st.metric("🟢 偏空 / 整理格局", f"{n_bear} 檔", delta=f"中性 {n_neutral} 檔", delta_color="off", border=True)
-    st.metric("⚡ 今日新觸發轉折訊號", f"{n_triggers} 檔", delta="含金叉/死叉/突破", delta_color="off", border=True)
+    st.metric("掃描標的總數", f"{len(scan_df_all)} 檔", delta=f"最新資料日 {scan_df_all['最新日期'].max()}", delta_color="off", delta_arrow="off", border=True)
+    st.metric("🔴 偏多 / 買方格局", f"{n_bull} 檔", delta=f"佔比 {n_bull/len(scan_df_all)*100:.0f}%", delta_color="red", delta_arrow="up", border=True)
+    st.metric("🟢 偏空 / 整理格局", f"{n_bear} 檔", delta=f"中性 {n_neutral} 檔", delta_color="green", delta_arrow="down", border=True)
+    st.metric("⚡ 今日新觸發轉折訊號", f"{n_triggers} 檔", delta="含金叉/死叉/突破", delta_color="off", delta_arrow="off", border=True)
 
 # ── 今日焦點轉折快訊 ──────────────────────────────────────────────────────────
 if fresh_alerts:
@@ -268,7 +268,8 @@ if fresh_alerts:
                     label=f"{item['sid']} {item['name']}",
                     value=f"NT${item['close']:.2f} ({item['chg_pct']:+.2f}%)",
                     delta=f"⚡ {item['triggers']} (評分 {item['score']:+d})",
-                    delta_color="inverse" if item["score"] >= 0 else "normal",
+                    delta_color="red" if item["score"] > 0 else ("green" if item["score"] < 0 else "gray"),
+                    delta_arrow="up" if item["score"] > 0 else ("down" if item["score"] < 0 else "off"),
                     border=True,
                 )
 
