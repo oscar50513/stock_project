@@ -5,8 +5,15 @@
 """
 
 import glob
+import logging
 import os
+import warnings
 import pandas as pd
+
+# 抑制非 Streamlit Server 環境下的警告與提示
+warnings.filterwarnings("ignore")
+logging.getLogger("streamlit").setLevel(logging.ERROR)
+logging.disable(logging.WARNING)
 
 from fill_yfinance_gap import fill_gaps
 from src.indicators import (
