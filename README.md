@@ -15,7 +15,8 @@
 
 | 模組頁面 | 功能亮點 | 對應檔案 |
 | :--- | :--- | :--- |
-| **📊 個股技術分析** | K 線圖、多週期均線（MA5/10/20/60）、雙布林通道（2σ/3σ）、RSI、MACD、KD 指標與多空綜合評分儀表板 | [`app_pages/overview.py`](app_pages/overview.py) |
+| **📊 個股技術分析** | K 線圖、多週期均線（MA5/10/20/60）、雙布林通道（2σ/3σ）、RSI、MACD、KD 指標、關鍵支撐壓力速覽卡與多空評分 | [`app_pages/overview.py`](app_pages/overview.py) |
+| **🔮 AI 股價預測** | 萃取 16 項量價技術指標因子，結合 **多因子嶺迴歸（Ridge Regression）**、**KNN 歷史相似技術型態匹配** 與 **蒙地卡羅信心扇形圖（50%/90% 區間）** 預測未來 1～30 日股價與上漲勝率，並內建 **樣本外滾動驗證（Walk-Forward Validation）** 與全市場潛力排行榜 | [`app_pages/prediction.py`](app_pages/prediction.py) |
 | **📡 今日訊號雷達** | 每日收盤全市場掃描（黃金交叉、布林突破、KD 低檔金叉、RSI 超買超賣、爆量長紅），支援一鍵發送 **Discord Rich Embed** 報告 | [`app_pages/screener.py`](app_pages/screener.py) |
 | **🔥 主動式 ETF 專區** | 內建台灣主動式 ETF（`00980A`、`00981A`、`00982A`、`00983A`、`00984A`、`00403A`、`00991A`、`00988A`、`00990A`），自動依主題對標 `0050`、`00830`（國泰費城半導體）或 `0056`，計算 **Alpha、Beta、Information Ratio、相對強弱線（RS Line）** 與 **前十大成分股重疊度矩陣** | [`app_pages/active_etf.py`](app_pages/active_etf.py) |
 | **⚖️ 多股比較與資產配置** | 跨標的正規化累積報酬率、風險報酬散佈圖、相關係數矩陣、滾動波動率，以及 **馬可維茲效率前緣（Markowitz Efficient Frontier）** 蒙地卡羅最適權重模擬（最大夏普 / 最小波動組合） | [`app_pages/comparison.py`](app_pages/comparison.py) |
