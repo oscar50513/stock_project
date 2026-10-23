@@ -379,6 +379,20 @@ with st.container(border=True):
         # 打敗大盤日勝率
         win_days_pct = float((active_r > 0).mean()) * 100
 
+        # 上漲 / 下跌捕獲率 (Upside / Downside Capture Ratio)
+        up_mask = r_bench > 0
+        dn_mask = r_bench < 0
+        upside_capture = (
+            float(r_etf[up_mask].mean() / r_bench[up_mask].mean()) * 100.0
+            if up_mask.any() and abs(float(r_bench[up_mask].mean())) > 1e-9
+            else 100.0
+        )
+        downside_capture = (
+            float(r_etf[dn_mask].mean() / r_bench[dn_mask].mean()) * 100.0
+            if dn_mask.any() and abs(float(r_bench[dn_mask].mean())) > 1e-9
+            else 100.0
+        )
+
         if excess_ret >= 3.0 and ir >= 0.5:
             grade = "🏆 顯著打敗基準"
         elif excess_ret > 0:
@@ -401,6 +415,8 @@ with st.container(border=True):
             "Beta": beta,
             "資訊比率(IR)": ir,
             "Sharpe": sharpe,
+            "上漲捕獲率%": upside_capture,
+            "下跌捕獲率%": downside_capture,
             "年化波動率": vol_annual,
             "最大回撤(MDD)": mdd,
             "勝過基準日數%": win_days_pct,
@@ -427,10 +443,19 @@ with st.container(border=True):
                 "Beta": "{:.2f}",
                 "資訊比率(IR)": "{:+.2f}",
                 "Sharpe": "{:.2f}",
+                "上漲捕獲率%": "{:.1f}%",
+                "下跌捕獲率%": "{:.1f}%",
                 "年化波動率": "{:.2f}%",
                 "最大回撤(MDD)": "{:.2f}%",
                 "勝過基準日數%": "{:.1f}%",
             }),
+        )
+
+        st.download_button(
+            label=":material/download: 匯出主動式 ETF 績效檢驗表 (CSV)",
+            data=perf_df.to_csv().encode("utf-8-sig"),
+            file_name=f"active_etf_performance_{horizon}.csv",
+            mime="text/csv",
         )
 
     # 風險 vs 報酬散佈圖（波動率 vs 區間報酬）

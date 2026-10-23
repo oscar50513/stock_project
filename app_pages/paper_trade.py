@@ -14,8 +14,14 @@ from src.indicators import DATA_DIR, STOCK_NAMES, get_stock_ids, load_stock
 # ── 模擬帳戶儲存路徑 ──────────────────────────────────────────────────────────
 PORTFOLIO_FILE = os.path.join(DATA_DIR, "paper_portfolio.json")
 BUY_FEE  = 0.001425   # 買入手續費 0.1425%
-SELL_FEE = 0.004425   # 賣出手續費 0.1425% + 交易稅 0.3%
+SELL_FEE = 0.004425   # 賣出手續費 0.1425% + 一般股票交易稅 0.3%
 LOT_SIZE = 1_000      # 台股 1 張 = 1,000 股
+
+
+def get_sell_fee_rate(sid: str) -> float:
+    """區分一般個股（證交稅 0.3%）與 ETF（代號 00 開頭，證交稅 0.1%）之賣出總費用率。"""
+    tax_rate = 0.001 if str(sid).startswith("00") else 0.003
+    return BUY_FEE + tax_rate
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -107,24 +113,43 @@ with st.sidebar:
     else:
         st.warning("無法取得最新價格")
 
-    order_lots = st.number_input(
-        "張數（1 張 = 1,000 股）",
-        min_value=1, max_value=500, value=1, step=1,
-    )
-    order_shares = order_lots * LOT_SIZE
+    order_unit = st.segmented_control(
+        "交易單位",
+        ["整張 (1,000股)", "零股 (股)"],
+        default="整張 (1,000股)",
+        key="pt_order_unit",
+    ) or "整張 (1,000股)"
+
+    if order_unit == "整張 (1,000股)":
+        order_lots = st.number_input(
+            "張數（1 張 = 1,000 股）",
+            min_value=1, max_value=500, value=1, step=1,
+        )
+        order_shares = int(order_lots * LOT_SIZE)
+        qty_desc = f"{order_lots} 張 ({order_shares:,} 股)"
+    else:
+        odd_shares = st.number_input(
+            "零股股數（1 ～ 999 股）",
+            min_value=1, max_value=999, value=100, step=10,
+        )
+        order_shares = int(odd_shares)
+        qty_desc = f"{order_shares:,} 股"
+
+    sell_fee_rate = get_sell_fee_rate(order_sid)
+    is_etf = str(order_sid).startswith("00")
 
     if latest_price is not None:
         buy_total  = order_shares * latest_price * (1 + BUY_FEE)
-        sell_total = order_shares * latest_price * (1 - SELL_FEE)
-        st.caption(f"買入預估金額：NT${buy_total:,.0f}（含手續費）")
-        st.caption(f"賣出預估入帳：NT${sell_total:,.0f}（扣手續費＋稅）")
+        sell_total = order_shares * latest_price * (1 - sell_fee_rate)
+        st.caption(f"買入預估金額：NT${buy_total:,.0f}（含手續費 0.1425%）")
+        st.caption(f"賣出預估入帳：NT${sell_total:,.0f}（扣手續費＋{'ETF 證交稅 0.1%' if is_etf else '個股證交稅 0.3%'}）")
 
     st.space("small")
     bcol, scol = st.columns(2)
 
     # ── 買入 ─────────────────────────────────────────────────────────────────
     with bcol:
-        if st.button("🔴 買入", use_container_width=True, type="primary"):
+        if st.button("🔴 買入", width="stretch", type="primary"):
             if latest_price is None:
                 st.error("無法取得價格")
             elif buy_total > pf["cash"]:
@@ -139,22 +164,26 @@ with st.sidebar:
                     new_shares = old["shares"] + order_shares
                     new_cost   = old["total_cost"] + cost
                     pf["holdings"][sid] = {
-                        "shares":     new_shares,
-                        "avg_cost":   new_cost / new_shares,
-                        "total_cost": new_cost,
+                        "shares":            new_shares,
+                        "avg_cost":          new_cost / new_shares,
+                        "total_cost":        new_cost,
+                        "stop_loss_price":   old.get("stop_loss_price"),
+                        "take_profit_price": old.get("take_profit_price"),
                     }
                 else:
                     pf["holdings"][sid] = {
-                        "shares":     order_shares,
-                        "avg_cost":   cost / order_shares,
-                        "total_cost": cost,
+                        "shares":            order_shares,
+                        "avg_cost":          cost / order_shares,
+                        "total_cost":        cost,
+                        "stop_loss_price":   None,
+                        "take_profit_price": None,
                     }
 
                 pf["transactions"].append({
                     "時間": datetime.now().strftime("%Y/%m/%d %H:%M"),
                     "股票": f"{sid} {STOCK_NAMES.get(sid, '')}",
                     "操作": "買入 🔴",
-                    "張數": order_lots,
+                    "張數": round(order_shares / LOT_SIZE, 3),
                     "成交價": round(latest_price, 2),
                     "金額": round(cost, 0),
                     "損益": None,
@@ -163,23 +192,23 @@ with st.sidebar:
                 total_eq = calc_total_equity(pf)
                 record_equity(pf, today_str, total_eq)
                 save_portfolio(pf)
-                st.success(f"買入 {sid} {order_lots} 張 @ {latest_price:.2f}")
+                st.success(f"買入 {sid} {qty_desc} @ {latest_price:.2f}")
                 st.rerun()
 
     # ── 賣出 ─────────────────────────────────────────────────────────────────
     with scol:
-        if st.button("🟢 賣出", use_container_width=True):
+        if st.button("🟢 賣出", width="stretch"):
             sid = order_sid
             if latest_price is None:
                 st.error("無法取得價格")
             elif sid not in pf["holdings"]:
                 st.error(f"未持有 {sid}")
             elif pf["holdings"][sid]["shares"] < order_shares:
-                held_lots = pf["holdings"][sid]["shares"] // LOT_SIZE
-                st.error(f"持有不足！只有 {held_lots} 張")
+                held_sh = pf["holdings"][sid]["shares"]
+                st.error(f"持有不足！目前僅持有 {held_sh:,} 股（{held_sh / LOT_SIZE:.3f} 張）")
             else:
                 pos       = pf["holdings"][sid]
-                proceeds  = order_shares * latest_price * (1 - SELL_FEE)
+                proceeds  = order_shares * latest_price * (1 - sell_fee_rate)
                 avg_cost  = pos["avg_cost"]
                 pnl       = proceeds - order_shares * avg_cost
                 pf["cash"] += proceeds
@@ -189,16 +218,18 @@ with st.sidebar:
                     del pf["holdings"][sid]
                 else:
                     pf["holdings"][sid] = {
-                        "shares":     new_shares,
-                        "avg_cost":   avg_cost,
-                        "total_cost": avg_cost * new_shares,
+                        "shares":            new_shares,
+                        "avg_cost":          avg_cost,
+                        "total_cost":        avg_cost * new_shares,
+                        "stop_loss_price":   pos.get("stop_loss_price"),
+                        "take_profit_price": pos.get("take_profit_price"),
                     }
 
                 pf["transactions"].append({
                     "時間": datetime.now().strftime("%Y/%m/%d %H:%M"),
                     "股票": f"{sid} {STOCK_NAMES.get(x, '')}" if (x := sid) else sid,
                     "操作": "賣出 🟢",
-                    "張數": order_lots,
+                    "張數": round(order_shares / LOT_SIZE, 3),
                     "成交價": round(latest_price, 2),
                     "金額": round(proceeds, 0),
                     "損益": round(pnl, 0),
@@ -208,8 +239,39 @@ with st.sidebar:
                 record_equity(pf, today_str, total_eq)
                 save_portfolio(pf)
                 pnl_str = f"+NT${pnl:,.0f}" if pnl >= 0 else f"-NT${abs(pnl):,.0f}"
-                st.success(f"賣出 {sid} {order_lots} 張 @ {latest_price:.2f}，損益 {pnl_str}")
+                st.success(f"賣出 {sid} {qty_desc} @ {latest_price:.2f}，損益 {pnl_str}")
                 st.rerun()
+
+    # ── 持倉停損／停利目標價設定 ──────────────────────────────────────────────
+    if pf["holdings"]:
+        st.divider()
+        st.subheader(":material/flag: 持倉停損／停利設定", anchor=False)
+        held_sids = list(pf["holdings"].keys())
+        target_sid = st.selectbox(
+            "選擇持倉標的",
+            held_sids,
+            format_func=lambda x: f"{x} {STOCK_NAMES.get(x, '')}",
+            key="pt_sl_tp_sid",
+        )
+        cur_pos = pf["holdings"][target_sid]
+        cur_sl = float(cur_pos.get("stop_loss_price") or 0.0)
+        cur_tp = float(cur_pos.get("take_profit_price") or 0.0)
+        sl_val = st.number_input(
+            "停損觸發價 (0 代表不啟用)",
+            min_value=0.0, value=cur_sl, step=0.5, format="%.2f",
+            key=f"pt_sl_{target_sid}",
+        )
+        tp_val = st.number_input(
+            "停利目標價 (0 代表不啟用)",
+            min_value=0.0, value=cur_tp, step=0.5, format="%.2f",
+            key=f"pt_tp_{target_sid}",
+        )
+        if st.button(":material/save: 儲存停損停利價", width="stretch"):
+            pf["holdings"][target_sid]["stop_loss_price"] = sl_val if sl_val > 0 else None
+            pf["holdings"][target_sid]["take_profit_price"] = tp_val if tp_val > 0 else None
+            save_portfolio(pf)
+            st.toast(f"已更新 {target_sid} 停損／停利目標價！", icon=":material/check_circle:")
+            st.rerun()
 
     st.divider()
 
@@ -219,7 +281,7 @@ with st.sidebar:
             "初始資金 (NTD)", min_value=100_000, max_value=10_000_000,
             value=1_000_000, step=100_000, format="%d",
         )
-        if st.button("🔄 重置帳戶", type="secondary", use_container_width=True):
+        if st.button("🔄 重置帳戶", type="secondary", width="stretch"):
             fresh = {
                 "initial_capital": new_capital,
                 "cash": new_capital,
@@ -286,7 +348,7 @@ if len(pf["equity_history"]) >= 2:
         )
         fig_eq.update_xaxes(gridcolor="#1e2535")
         fig_eq.update_yaxes(gridcolor="#1e2535")
-        st.plotly_chart(fig_eq, use_container_width=True)
+        st.plotly_chart(fig_eq, width="stretch")
 
 # ── 持倉明細 ──────────────────────────────────────────────────────────────────
 with st.container(border=True):
@@ -304,11 +366,27 @@ with st.container(border=True):
             cost_val   = pos["total_cost"]
             pnl        = market_val - cost_val
             pnl_pct    = pnl / cost_val * 100
+            sl_p       = pos.get("stop_loss_price")
+            tp_p       = pos.get("take_profit_price")
+
+            if tp_p and price >= float(tp_p):
+                st.error(
+                    f"🎯 【停利達標】**{sid} {STOCK_NAMES.get(sid, '')}** 最新收盤價 `NT${price:.2f}` 已突破設定停利目標價 `NT${float(tp_p):.2f}`！",
+                    icon=":material/celebration:",
+                )
+            if sl_p and price <= float(sl_p):
+                st.success(
+                    f"⚠️ 【停損觸發】**{sid} {STOCK_NAMES.get(sid, '')}** 最新收盤價 `NT${price:.2f}` 已跌破設定停損價 `NT${float(sl_p):.2f}`，請注意部位風險！",
+                    icon=":material/warning:",
+                )
+
             holdings_rows.append({
                 "股票":     f"{sid} {STOCK_NAMES.get(sid, '')}",
-                "持有張數": pos["shares"] // LOT_SIZE,
+                "持有股數": f"{pos['shares']:,} 股 ({pos['shares'] / LOT_SIZE:.3f} 張)",
                 "平均成本": round(pos["avg_cost"], 2),
                 "現價":     round(price, 2),
+                "停損價":   f"{float(sl_p):.2f}" if sl_p else "—",
+                "停利價":   f"{float(tp_p):.2f}" if tp_p else "—",
                 "市值":     round(market_val, 0),
                 "未實現損益": round(pnl, 0),
                 "損益%":    round(pnl_pct, 2),
@@ -328,7 +406,7 @@ with st.container(border=True):
                     "未實現損益": "NT${:+,.0f}",
                     "損益%":      "{:+.2f}%",
                 }),
-                use_container_width=True,
+                width="stretch",
             )
 
             # 持倉比例圓餅圖
@@ -344,7 +422,7 @@ with st.container(border=True):
                 alt.Color("標的:N", legend=alt.Legend(title="標的")),
                 alt.Tooltip(["標的:N", "市值:Q"]),
             ).properties(title="持倉分配", height=260)
-            st.altair_chart(pie_chart, use_container_width=True)
+            st.altair_chart(pie_chart, width="stretch")
 
 # ── 交易紀錄 ──────────────────────────────────────────────────────────────────
 with st.expander(":material/receipt_long: 交易紀錄", expanded=False):
@@ -356,4 +434,4 @@ with st.expander(":material/receipt_long: 交易紀錄", expanded=False):
             lambda x: f"NT${x:+,.0f}" if x is not None else "—"
         )
         tx_df["金額"] = tx_df["金額"].apply(lambda x: f"NT${x:,.0f}")
-        st.dataframe(tx_df, hide_index=True, use_container_width=True)
+        st.dataframe(tx_df, hide_index=True, width="stretch")

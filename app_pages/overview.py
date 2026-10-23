@@ -249,7 +249,34 @@ with st.container(border=True):
     fig.update_xaxes(gridcolor="#1e2535", showgrid=True)
     fig.update_yaxes(gridcolor="#1e2535", showgrid=True)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
+
+# ── 關鍵技術支撐與壓力價位速覽 ─────────────────────────────────────────────────
+with st.container(border=True):
+    st.subheader(":material/layers: 關鍵技術支撐與壓力價位", anchor=False)
+    st.caption("自動計算目前收盤價相對應的近期關鍵技術支撐、多空分水嶺與上檔壓力價位（括號為距離現價之幅度）。")
+
+    _bb_sr = df_bb_full if df_bb_full is not None else calc_bbands(df_full, bb_period, bb_std)
+    _ma_sr = df_ma_full if df_ma_full is not None else calc_ma(df_full)
+
+    sr_bb_up  = float(_bb_sr["b_up"].iloc[-1]) if pd.notna(_bb_sr["b_up"].iloc[-1]) else float(latest)
+    sr_high20 = float(df_full["High"].tail(20).max())
+    sr_ma20   = float(_ma_sr["MA20"].iloc[-1]) if pd.notna(_ma_sr["MA20"].iloc[-1]) else float(latest)
+    sr_low20  = float(df_full["Low"].tail(20).min())
+    sr_bb_low = float(_bb_sr["b_low"].iloc[-1]) if pd.notna(_bb_sr["b_low"].iloc[-1]) else float(latest)
+
+    def _dist_str(target_p: float) -> str:
+        pct = (target_p / float(latest) - 1.0) * 100.0
+        return f"距現價 {pct:+.2f}%"
+
+    with st.container(horizontal=True):
+        st.metric("壓力 2｜布林上軌 (+2σ)", f"{sr_bb_up:.2f}", delta=_dist_str(sr_bb_up), delta_color="off", delta_arrow="off", border=True)
+        st.metric("壓力 1｜20日波段高點", f"{sr_high20:.2f}", delta=_dist_str(sr_high20), delta_color="off", delta_arrow="off", border=True)
+        st.metric("分水嶺｜20MA 月線", f"{sr_ma20:.2f}", delta="站上月線 🔴" if latest >= sr_ma20 else "月線之下 🟢",
+                  delta_color="red" if latest >= sr_ma20 else "green",
+                  delta_arrow="up" if latest >= sr_ma20 else "down", border=True)
+        st.metric("支撐 1｜20日波段低點", f"{sr_low20:.2f}", delta=_dist_str(sr_low20), delta_color="off", delta_arrow="off", border=True)
+        st.metric("支撐 2｜布林下軌 (-2σ)", f"{sr_bb_low:.2f}", delta=_dist_str(sr_bb_low), delta_color="off", delta_arrow="off", border=True)
 
 # ── 布林通道指標分析 ───────────────────────────────────────────────────────────
 if show_bb and df_bb is not None:
@@ -343,7 +370,7 @@ with st.expander(":material/table_chart: 統計摘要 & 原始資料", expanded=
         ann_vol    = std_daily * math.sqrt(252) * 100
         stats = {
             "期間":      f"{df.index.min().date()} ～ {df.index.max().date()}",
-            "交易日數":  len(df),
+            "交易日數":  f"{len(df):,} 天",
             "最高收盤":  f"{df['Close'].max():.2f}",
             "最低收盤":  f"{df['Close'].min():.2f}",
             "平均收盤":  f"{df['Close'].mean():.2f}",
@@ -356,15 +383,22 @@ with st.expander(":material/table_chart: 統計摘要 & 原始資料", expanded=
         )
     with sc2:
         st.caption("最近 10 筆資料")
-        disp = df.tail(10)[["Open", "High", "Low", "Close", "Volume"]].copy()
+        disp_full = df[["Open", "High", "Low", "Close", "Volume"]].copy()
+        disp_full["漲跌%"] = df_full["Close"].pct_change().reindex(df.index) * 100.0
+        disp = disp_full.tail(10)[["Open", "High", "Low", "Close", "漲跌%", "Volume"]].copy()
         disp.index = disp.index.strftime("%Y/%m/%d")
         st.dataframe(
-            disp,
-            column_config={
-                "Open":   st.column_config.NumberColumn("開盤",    format="%.2f"),
-                "High":   st.column_config.NumberColumn("最高",    format="%.2f"),
-                "Low":    st.column_config.NumberColumn("最低",    format="%.2f"),
-                "Close":  st.column_config.NumberColumn("收盤",    format="%.2f"),
-                "Volume": st.column_config.NumberColumn("成交量(張)", format="%d"),
-            },
+            disp.style.map(
+                lambda v: "color: #ef4444; font-weight: 600" if isinstance(v, (int, float)) and pd.notna(v) and v > 0
+                else ("color: #22c55e; font-weight: 600" if isinstance(v, (int, float)) and pd.notna(v) and v < 0 else ""),
+                subset=["漲跌%"],
+            ).format({
+                "Open": "{:.2f}",
+                "High": "{:.2f}",
+                "Low": "{:.2f}",
+                "Close": "{:.2f}",
+                "漲跌%": "{:+.2f}%",
+                "Volume": "{:,.0f}",
+            }),
+            width="stretch",
         )

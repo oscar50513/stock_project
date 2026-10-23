@@ -68,8 +68,32 @@ def fill_gaps(csv_path):
     df_new.to_csv(csv_path, mode='a', header=False, index=False)
 
 
+def update_all_csvs(data_dir: str | None = None) -> tuple[int, str]:
+    """掃描指定目錄下所有 [0-9]*.csv 並補齊最新收盤資料。
+    
+    Returns
+    -------
+    tuple[int, str]
+        (掃描並處理的 CSV 檔案數量, 最新資料日期 YYYY/MM/DD)
+    """
+    base_dir = data_dir or os.path.dirname(os.path.abspath(__file__))
+    csvs = sorted(glob.glob(os.path.join(base_dir, '[0-9]*.csv')))
+    latest_dt = ""
+    for csv_path in csvs:
+        fill_gaps(csv_path)
+        try:
+            df_chk = pd.read_csv(csv_path)
+            if not df_chk.empty and 'Date' in df_chk.columns:
+                dt_str = str(df_chk['Date'].iloc[-1])
+                if dt_str > latest_dt:
+                    latest_dt = dt_str
+        except Exception:
+            pass
+    return len(csvs), latest_dt
+
+
 if __name__ == '__main__':
-    csvs = glob.glob('*.csv')
+    csvs = sorted(glob.glob('[0-9]*.csv'))
     for csv in csvs:
         fill_gaps(csv)
     print("Done filling gaps.")

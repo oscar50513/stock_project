@@ -57,7 +57,7 @@ for sid in stock_ids:
     })
 
 status_df = pd.DataFrame(rows).set_index("股票")
-st.dataframe(status_df, use_container_width=True)
+st.dataframe(status_df, width="stretch")
 
 # ── 一鍵更新 ──────────────────────────────────────────────────────────────────
 st.subheader(":material/refresh: 更新資料", anchor=False)
@@ -73,7 +73,7 @@ with col_r:
     do_update = st.button(
         ":material/cloud_download: 立即更新所有股票",
         type="primary",
-        use_container_width=True,
+        width="stretch",
     )
 
 if do_update:
