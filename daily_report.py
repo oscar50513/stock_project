@@ -16,6 +16,7 @@ logging.getLogger("streamlit").setLevel(logging.ERROR)
 logging.disable(logging.WARNING)
 
 from fill_yfinance_gap import fill_gaps
+from src.forecaster import get_ai_forecast_summary, get_portfolio_alert_summary
 from src.indicators import (
     ACTIVE_ETF_META,
     DATA_DIR,
@@ -195,6 +196,9 @@ def run_daily_pipeline() -> tuple[bool, str]:
         for _, r in core_watch.iterrows()
     )
 
+    ai_forecast_summary = get_ai_forecast_summary(horizon=5, top_n=4)
+    portfolio_alert_summary = get_portfolio_alert_summary()
+
     # 3. 推播至 Discord
     print("=== Step 3: 發送訊號雷達日報至 Discord Webhook ===")
     ok, msg = notify_discord(
@@ -202,6 +206,8 @@ def run_daily_pipeline() -> tuple[bool, str]:
             ("🔥 強勢多頭與買訊標的", bull_summary),
             ("⚡ 今日新觸發技術轉折", trigger_summary),
             ("⚠️ 偏空與轉弱警示", bear_summary),
+            ("🔮 AI 股價預測 Top 潛力與目標價 (T+5)", ai_forecast_summary),
+            ("💼 模擬帳戶持倉損益與停損停利監控", portfolio_alert_summary),
             ("📌 核心關注標的收盤報價", price_summary),
         ],
         title=f"📊 台股與主動式 ETF 訊號雷達日報（資料日：{scan_df_all['最新日期'].max()}）",

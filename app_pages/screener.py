@@ -14,6 +14,7 @@ importlib.reload(_cfg)
 importlib.reload(_ntf)
 
 from src.config import get_discord_webhook_url, save_discord_webhook_url
+from src.forecaster import get_ai_forecast_summary, get_portfolio_alert_summary
 from src.indicators import (
     ACTIVE_ETF_META,
     STOCK_NAMES,
@@ -415,10 +416,15 @@ with st.container(border=True):
         for _, r in core_watch.iterrows()
     )
 
+    ai_summary = get_ai_forecast_summary(horizon=5, top_n=4)
+    pf_summary = get_portfolio_alert_summary()
+
     sec1 = st.text_input("區塊 1 — 🔥 強勢多頭與買訊摘要", value=bull_summary)
     sec2 = st.text_input("區塊 2 — ⚡ 今日新觸發技術轉折", value=trigger_summary)
     sec3 = st.text_input("區塊 3 — ⚠️ 偏空與轉弱警示", value=bear_summary)
-    sec4 = st.text_area("區塊 4 — 📌 核心關注標的收盤報價", value=price_summary, height=140)
+    sec_ai = st.text_area("區塊 4 — 🔮 AI 股價預測 Top 潛力與目標價 (T+5)", value=ai_summary, height=110)
+    sec_pf = st.text_area("區塊 5 — 💼 模擬帳戶持倉損益與停損停利監控", value=pf_summary, height=90)
+    sec4 = st.text_area("區塊 6 — 📌 核心關注標的收盤報價", value=price_summary, height=140)
 
     if st.button(":material/rocket_launch: 立即發送彩色訊號日報至 Discord", type="primary"):
         active_url = webhook_input.strip() or saved_webhook
@@ -430,6 +436,8 @@ with st.container(border=True):
                     ("🔥 強勢多頭與買訊標的", sec1),
                     ("⚡ 今日新觸發技術轉折", sec2),
                     ("⚠️ 偏空與轉弱警示", sec3),
+                    ("🔮 AI 股價預測 Top 潛力與目標價 (T+5)", sec_ai),
+                    ("💼 模擬帳戶持倉損益與停損停利監控", sec_pf),
                     ("📌 核心關注標的收盤報價", sec4),
                 ],
                 webhook_url=active_url,

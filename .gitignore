@@ -22,8 +22,9 @@ env/
 # Streamlit
 .streamlit/secrets.toml
 
-# 模擬交易帳戶（個人狀態，不需同步）
+# 模擬交易帳戶與個人日曆暫存檔（個人狀態，不需同步）
 paper_portfolio.json
+stockradar_dividends.ics
 
 # IDE / 工具
 .agents/
